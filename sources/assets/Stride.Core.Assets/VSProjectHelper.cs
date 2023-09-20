@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
@@ -298,21 +297,12 @@ namespace Stride.Core.Assets
 
             void ErrorRaised(object sender, Microsoft.Build.Framework.BuildErrorEventArgs e)
             {
-                if (logger is LoggerResult loggerResult)
+                var loggerResult = logger as LoggerResult;
+                if (loggerResult != null)
                 {
-                    loggerResult.Module = $"{e.File}({e.LineNumber},{e.ColumnNumber})";
+                    loggerResult.Module = string.Format("{0}({1},{2})", e.File, e.LineNumber, e.ColumnNumber);
                 }
-
-                if (e.Code == "NETSDK1045")
-                {
-                    var netVersion = Regex.Match(e.Message, @"\.(NET|net) ?(\d+\.\d+)");
-                    if (netVersion.Success)
-                        logger.Error($"{e.Code}: this project requires {netVersion} SDK, please go to https://dotnet.microsoft.com/download and download {netVersion} SDK.");
-                    else
-                        logger.Error($"{e.Code}: {e.Message}");
-                }
-                else
-                    logger.Error(e.Message);
+                logger.Error(e.Message);
             }
         }
 

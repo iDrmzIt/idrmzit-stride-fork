@@ -175,26 +175,25 @@ namespace Stride.Graphics
             NativeRenderTargetView = GetRenderTargetView(ViewType, ArraySlice, MipLevel);
             NativeDepthStencilView = GetDepthStencilView(out HasStencil);
 
-            if (textureDescription.Options == TextureOptions.None)
+            switch (textureDescription.Options)
             {
-                SharedHandle = IntPtr.Zero;
-            }
+                case TextureOptions.None:
+                    SharedHandle = IntPtr.Zero;
+                    break;
+                case TextureOptions.Shared:
+                    var sharedResource = NativeDeviceChild.QueryInterface<SharpDX.DXGI.Resource>();
+                    SharedHandle = sharedResource.SharedHandle;
+                    break;
 #if STRIDE_GRAPHICS_API_DIRECT3D11
-            else if ((textureDescription.Options & TextureOptions.SharedNthandle) != 0)
-            {
-                var sharedResource1 = NativeDeviceChild.QueryInterface<SharpDX.DXGI.Resource1>();
-                var uniqueName = "Stride:" + Guid.NewGuid().ToString();
-                SharedHandle = sharedResource1.CreateSharedHandle(uniqueName, SharpDX.DXGI.SharedResourceFlags.Write);
-                SharedNtHandleName = uniqueName;
-            }
+                case TextureOptions.SharedNthandle | TextureOptions.SharedKeyedmutex:
+                    var sharedResource1 = NativeDeviceChild.QueryInterface<SharpDX.DXGI.Resource1>();
+                    var uniqueName = "Stride:" + Guid.NewGuid().ToString();
+                    SharedHandle = sharedResource1.CreateSharedHandle(uniqueName, SharpDX.DXGI.SharedResourceFlags.Write);
+                    SharedNtHandleName = uniqueName;
+                    break; 
 #endif
-            else if ((textureDescription.Options & TextureOptions.Shared) != 0) {
-                var sharedResource = NativeDeviceChild.QueryInterface<SharpDX.DXGI.Resource>();
-                SharedHandle = sharedResource.SharedHandle;
-            }
-            else
-            { 
-                throw new ArgumentOutOfRangeException("textureDescription.Options");
+                default:
+                    throw new ArgumentOutOfRangeException("textureDescription.Options");
             }
         }
 
