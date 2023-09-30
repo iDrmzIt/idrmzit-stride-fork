@@ -112,7 +112,7 @@ namespace Stride.Core
                         LoadedLibraries.Add(libraryName, result);
                         return;
                     }
-                    else if (!libraryName.StartsWith(UNIX_LIB_PREFIX, StringComparison.Ordinal)
+                    else if (!libraryName.StartsWith(UNIX_LIB_PREFIX)
                         && NativeLibrary.TryLoad(UNIX_LIB_PREFIX + libraryNameWithExtension, out result))
                     {
                         LoadedLibraries.Add(libraryName, result);

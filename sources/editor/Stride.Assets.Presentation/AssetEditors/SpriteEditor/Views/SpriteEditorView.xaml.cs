@@ -1,7 +1,5 @@
 // Copyright (c) .NET Foundation and Contributors (https://dotnetfoundation.org/ & https://stride3d.net) and Silicon Studio Corp. (https://www.siliconstudio.co.jp)
 // Distributed under the MIT license. See the LICENSE.md file in the project root for more information.
-
-using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -23,12 +21,12 @@ namespace Stride.Assets.Presentation.AssetEditors.SpriteEditor.Views
         {
             var executingAssembly = Assembly.GetExecutingAssembly();
             var resources = executingAssembly.GetManifestResourceNames();
-            var stream = executingAssembly.GetManifestResourceStream(resources.First(x => x.EndsWith("ColorPicker.cur", StringComparison.Ordinal)));
+            var stream = executingAssembly.GetManifestResourceStream(resources.First(x => x.EndsWith("ColorPicker.cur")));
             if (stream != null)
             {
                 ColorPickerCursor = new Cursor(stream);
             }
-            stream = executingAssembly.GetManifestResourceStream(resources.First(x => x.EndsWith("MagicWand.cur", StringComparison.Ordinal)));
+            stream = executingAssembly.GetManifestResourceStream(resources.First(x => x.EndsWith("MagicWand.cur")));
             if (stream != null)
             {
                 MagicWandCursor = new Cursor(stream);

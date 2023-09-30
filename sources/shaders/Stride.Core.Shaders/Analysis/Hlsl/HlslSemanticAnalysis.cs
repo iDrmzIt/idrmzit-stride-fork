@@ -68,11 +68,11 @@ namespace Stride.Core.Shaders.Analysis.Hlsl
 
             swizzles = new List<MatrixType.Indexer>();
 
-            if (components.StartsWith("_", StringComparison.Ordinal))
+            if (components.StartsWith("_"))
             {
                 string[] splitComponents;
                 int indexOffset = 0;
-                if (components.StartsWith("_m", StringComparison.Ordinal))
+                if (components.StartsWith("_m"))
                 {
                     splitComponents = components.Split(new[] { "_m" }, StringSplitOptions.RemoveEmptyEntries);
                 }

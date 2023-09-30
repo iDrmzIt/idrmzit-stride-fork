@@ -64,7 +64,7 @@ namespace Stride.Core.Assets
 
             // Rename extension
             var extension = Path.GetExtension(filePath);
-            if (extension.StartsWith(".xk", StringComparison.Ordinal))
+            if (extension.StartsWith(".xk"))
             {
                 File.Move(filePath, filePath = filePath.Replace(".xk", ".sd"));
             }

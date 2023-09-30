@@ -336,7 +336,7 @@ namespace Stride.Core.Yaml
                 var overrideType = OverrideType.Base;
                 if (realName.Length != namePart.Length)
                 {
-                    if (namePart.Contains(OverridePostfixes.PostFixNewSealed) || namePart.EndsWith(OverridePostfixes.PostFixNewSealedAlt, StringComparison.Ordinal))
+                    if (namePart.Contains(OverridePostfixes.PostFixNewSealed) || namePart.EndsWith(OverridePostfixes.PostFixNewSealedAlt))
                     {
                         overrideType = OverrideType.New | OverrideType.Sealed;
                     }

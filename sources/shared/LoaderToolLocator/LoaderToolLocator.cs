@@ -31,7 +31,7 @@ namespace Stride.Core
                 const string LibPath = "\\lib";
 
                 var parentPath = Path.GetDirectoryName(tfmPath);
-                if (parentPath.EndsWith(LibPath, StringComparison.Ordinal))
+                if (parentPath.EndsWith(LibPath))
                 {
                     // Replace lib to tools
                     var tfm = tfmPath.Substring(parentPath.Length + 1);

@@ -357,23 +357,23 @@ namespace Stride.Core.Yaml
                 var scalar = keyValue.Key as YamlScalarNode;
                 if (scalar?.Value != null)
                 {
-                    var isPostFixNew = scalar.Value.EndsWith(OverridePostfixes.PostFixNewText, StringComparison.Ordinal);
-                    var isPostFixSealed = scalar.Value.EndsWith(OverridePostfixes.PostFixSealedText, StringComparison.Ordinal);
+                    var isPostFixNew = scalar.Value.EndsWith(OverridePostfixes.PostFixNewText);
+                    var isPostFixSealed = scalar.Value.EndsWith(OverridePostfixes.PostFixSealedText);
                     if (isPostFixNew || isPostFixSealed)
                     {
                         var name = scalar.Value;
                         var type = isPostFixNew ? OverrideType.New : OverrideType.Sealed;
 
-                        var isPostFixNewSealedAlt = name.EndsWith(OverridePostfixes.PostFixNewSealedAlt, StringComparison.Ordinal);
-                        var isPostFixNewSealed = name.EndsWith(OverridePostfixes.PostFixNewSealed, StringComparison.Ordinal);
+                        var isPostFixNewSealedAlt = name.EndsWith(OverridePostfixes.PostFixNewSealedAlt);
+                        var isPostFixNewSealed = name.EndsWith(OverridePostfixes.PostFixNewSealed);
                         if (isPostFixNewSealed || isPostFixNewSealedAlt)
                         {
                             type = OverrideType.New | OverrideType.Sealed;
-                            name = name[..^2];
+                            name = name.Substring(0, name.Length - 2);
                         }
                         else
                         {
-                            name = name[..^1];
+                            name = name.Substring(0, name.Length - 1);
                         }
                         if (keyMapping == null)
                         {

@@ -511,14 +511,14 @@ namespace Stride.Core.Assets
                 string line;
                 while ((line = reader.ReadLine()) != null)
                 {
-                    if (line.StartsWith("!Package", StringComparison.Ordinal))
+                    if (line.StartsWith("!Package"))
                     {
                         hasPackage = true;
                     }
 
-                    if (hasPackage && line.StartsWith("Id:", StringComparison.Ordinal))
+                    if (hasPackage && line.StartsWith("Id:"))
                     {
-                        var id = line["Id:".Length..].Trim();
+                        var id = line.Substring("Id:".Length).Trim();
                         return Guid.Parse(id);
                     }
                 }
@@ -1220,7 +1220,7 @@ namespace Stride.Core.Assets
                     foreach (var filePath in files)
                     {
                         // Don't load package via this method
-                        if (filePath.FullName.EndsWith(PackageFileExtension, StringComparison.OrdinalIgnoreCase))
+                        if (filePath.FullName.EndsWith(PackageFileExtension))
                         {
                             continue;
                         }

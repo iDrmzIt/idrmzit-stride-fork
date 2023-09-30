@@ -44,7 +44,7 @@ namespace Stride.Shaders.Compiler.Internals
         {
             this.socketMessageLayer = socketMessageLayer;
             RemoteUrl = remoteUrl;
-            if (!RemoteUrl.EndsWith(VirtualFileSystem.DirectorySeparatorChar))
+            if (!RemoteUrl.EndsWith(VirtualFileSystem.DirectorySeparatorChar.ToString()))
                 RemoteUrl += VirtualFileSystem.DirectorySeparatorChar;
         }
 

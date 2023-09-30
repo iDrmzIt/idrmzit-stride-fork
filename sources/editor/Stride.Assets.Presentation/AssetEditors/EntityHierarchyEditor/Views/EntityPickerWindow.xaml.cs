@@ -72,7 +72,7 @@ namespace Stride.Assets.Presentation.AssetEditors.EntityHierarchyEditor.Views
             if (editor == null) throw new ArgumentNullException(nameof(editor));
 
             InitializeComponent();
-            if (targetType != null && (typeof(EntityComponent).IsAssignableFrom(targetType) || targetType.IsAbstract))
+            if (targetType != null && typeof(EntityComponent).IsAssignableFrom(targetType))
             {
                 ComponentType = targetType;
                 Width *= 2;
@@ -120,8 +120,7 @@ namespace Stride.Assets.Presentation.AssetEditors.EntityHierarchyEditor.Views
 
             if (ComponentType != null)
             {
-                // Do not use IsInstanceOfType, it will fail when 'ComponentType' is an interface
-                return ComponentType.IsAssignableFrom(((EntityHierarchyItemViewModelWrapper)SelectedEntity).SelectedComponent?.Item2.GetType());
+                return ComponentType.IsInstanceOfType(((EntityHierarchyItemViewModelWrapper)SelectedEntity).SelectedComponent?.Item2);
             }
 
             return true;

@@ -299,7 +299,7 @@ namespace Stride.Core.ProjectTemplating
             var projectFile = File.ReadAllText(fullFilePath);
             ProjectTemplate template;
             // If this a project template?
-            if (projectFile.StartsWith("<#@", StringComparison.Ordinal))
+            if (projectFile.StartsWith("<#@"))
             {
                 template = new ProjectTemplate() { IsDynamicTemplate = true };
             }

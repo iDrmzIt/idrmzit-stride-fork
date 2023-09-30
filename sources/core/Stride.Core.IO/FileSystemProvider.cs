@@ -39,7 +39,7 @@ namespace Stride.Core.IO
                 localBasePath = localBasePath.Replace(AltDirectorySeparatorChar, DirectorySeparatorChar);
 
             // Ensure localBasePath ends with a \
-            if (localBasePath != null && !localBasePath.EndsWith(DirectorySeparatorChar))
+            if (localBasePath != null && !localBasePath.EndsWith(DirectorySeparatorChar.ToString()))
                 localBasePath = localBasePath + DirectorySeparatorChar;
         }
 

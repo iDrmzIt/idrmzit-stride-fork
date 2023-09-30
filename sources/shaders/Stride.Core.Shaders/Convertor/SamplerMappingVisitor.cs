@@ -115,7 +115,7 @@ namespace Stride.Core.Shaders.Convertor
                     var textureType = textureVariable.Type.ResolveType();
 
                     if (textureType is TextureType || (CultureInfo.InvariantCulture.CompareInfo.IsPrefix(textureType.Name.Text, "Texture", CompareOptions.IgnoreCase))
-                        || (textureType.IsBuiltIn && textureType.Name.Text.StartsWith("Buffer", StringComparison.Ordinal)))
+                        || (textureType.IsBuiltIn && textureType.Name.Text.StartsWith("Buffer")))
                     {
                         switch (memberRef.Member)
                         {
@@ -358,9 +358,9 @@ namespace Stride.Core.Shaders.Convertor
                 var samplerType = texture.Type.ResolveType();
                 var samplerTypeName = samplerType.Name.Text;
 
-                if (samplerTypeName.StartsWith("Texture", StringComparison.Ordinal))
-                    samplerTypeName = "sampler" + samplerTypeName["Texture".Length..];
-                else if (samplerTypeName.StartsWith("Buffer", StringComparison.Ordinal))
+                if (samplerTypeName.StartsWith("Texture"))
+                    samplerTypeName = "sampler" + samplerTypeName.Substring("Texture".Length);
+                else if (samplerTypeName.StartsWith("Buffer"))
                     samplerTypeName = "samplerBuffer";
 
                 // TODO: How do we support this on OpenGL ES 2.0? Cast to int/uint on Load()/Sample()?
@@ -394,20 +394,20 @@ namespace Stride.Core.Shaders.Convertor
         /// </returns>
         private static Tuple<int, TexFetchType> ParseTexFetch(string name)
         {
-            if (!name.StartsWith("tex", StringComparison.Ordinal))
+            if (!name.StartsWith("tex"))
                 return null;
 
-            name = name[3..];
+            name = name.Substring(3);
 
             int dimension;
 
-            if (name.StartsWith("1D", StringComparison.Ordinal))
+            if (name.StartsWith("1D"))
                 dimension = 1;
-            else if (name.StartsWith("2D", StringComparison.Ordinal))
+            else if (name.StartsWith("2D"))
                 dimension = 2;
-            else if (name.StartsWith("3D", StringComparison.Ordinal))
+            else if (name.StartsWith("3D"))
                 dimension = 3;
-            else if (name.StartsWith("CUBE", StringComparison.Ordinal))
+            else if (name.StartsWith("CUBE"))
                 dimension = 4;
             else
                 return null;

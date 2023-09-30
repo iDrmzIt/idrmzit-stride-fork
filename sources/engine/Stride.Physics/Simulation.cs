@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using Stride.Core.Diagnostics;
 using Stride.Core.Mathematics;
 using Stride.Core.MicroThreading;
@@ -17,7 +16,6 @@ namespace Stride.Physics
     {
         const CollisionFilterGroups DefaultGroup = (CollisionFilterGroups)BulletSharp.CollisionFilterGroups.DefaultFilter;
         const CollisionFilterGroupFlags DefaultFlags = (CollisionFilterGroupFlags)BulletSharp.CollisionFilterGroups.AllFilter;
-        private static readonly double OneOverFrequency = 1d / Stopwatch.Frequency;
 
         private readonly PhysicsProcessor processor;
 
@@ -36,8 +34,6 @@ namespace Stride.Physics
         private SimulationTickEvent preSimulationTick, postSimulationTick;
 
         internal readonly bool CanCcd;
-
-        private float carriedDelta;
 
 #if DEBUG
         private static readonly Logger Log = GlobalLogger.GetLogger(typeof(Simulation).FullName);
@@ -94,7 +90,7 @@ namespace Stride.Physics
                 configuration.Flags = OnSimulationCreation?.Invoke() ?? configuration.Flags;
             }
 
-            MaxTickDuration = configuration.MaxTickDuration;
+            MaxSubSteps = configuration.MaxSubSteps;
             FixedTimeStep = configuration.FixedTimeStep;
 
             collisionConfiguration = new BulletSharp.DefaultCollisionConfiguration();
@@ -886,19 +882,10 @@ namespace Stride.Physics
         /// <param name="filterGroup">The collision group of this raycast</param>
         /// <param name="filterFlags">The collision group that this raycast can collide with</param>
         /// <param name="hitTriggers">Whether this test should collide with <see cref="PhysicsTriggerComponentBase"/></param>
-        /// <param name="eFlags">Flags that control how this ray test is performed</param>
         /// <returns>The result of this test</returns>
-        public HitResult Raycast(Vector3 from, Vector3 to, CollisionFilterGroups filterGroup = DefaultGroup, CollisionFilterGroupFlags filterFlags = DefaultFlags, bool hitTriggers = false, EFlags eFlags = EFlags.None)
+        public HitResult Raycast(Vector3 from, Vector3 to, CollisionFilterGroups filterGroup = DefaultGroup, CollisionFilterGroupFlags filterFlags = DefaultFlags, bool hitTriggers = false)
         {
-            RayParams parameters;
-            parameters.From = from;
-            parameters.To = to;
-            parameters.FilterGroup = filterGroup;
-            parameters.FilterMask = filterFlags;
-            parameters.HitsNoContactResponseObjects = hitTriggers;
-            parameters.EFlags = eFlags;
-
-            var callback = StrideClosestRayResultCallback.Shared(parameters);
+            var callback = StrideClosestRayResultCallback.Shared(ref from, ref to, hitTriggers, filterGroup, filterFlags);
             collisionWorld.RayTest(from, to, callback);
             return callback.Result;
         }
@@ -912,19 +899,10 @@ namespace Stride.Physics
         /// <param name="filterGroup">The collision group of this raycast</param>
         /// <param name="filterFlags">The collision group that this raycast can collide with</param>
         /// <param name="hitTriggers">Whether this test should collide with <see cref="PhysicsTriggerComponentBase"/></param>
-        /// <param name="eFlags">Flags that control how this ray test is performed</param>
         /// <returns>True if the test collided with an object in the simulation</returns>
-        public bool Raycast(Vector3 from, Vector3 to, out HitResult result, CollisionFilterGroups filterGroup = DefaultGroup, CollisionFilterGroupFlags filterFlags = DefaultFlags, bool hitTriggers = false, EFlags eFlags = EFlags.None)
+        public bool Raycast(Vector3 from, Vector3 to, out HitResult result, CollisionFilterGroups filterGroup = DefaultGroup, CollisionFilterGroupFlags filterFlags = DefaultFlags, bool hitTriggers = false)
         {
-            RayParams parameters;
-            parameters.From = from;
-            parameters.To = to;
-            parameters.FilterGroup = filterGroup;
-            parameters.FilterMask = filterFlags;
-            parameters.HitsNoContactResponseObjects = hitTriggers;
-            parameters.EFlags = eFlags;
-
-            var callback = StrideClosestRayResultCallback.Shared(parameters);
+            var callback = StrideClosestRayResultCallback.Shared(ref from, ref to, hitTriggers, filterGroup, filterFlags);
             collisionWorld.RayTest(from, to, callback);
             result = callback.Result;
             return result.Succeeded;
@@ -940,18 +918,9 @@ namespace Stride.Physics
         /// <param name="filterGroup">The collision group of this raycast</param>
         /// <param name="filterFlags">The collision group that this raycast can collide with</param>
         /// <param name="hitTriggers">Whether this test should collide with <see cref="PhysicsTriggerComponentBase"/></param>
-        /// <param name="eFlags">Flags that control how this ray test is performed</param>
-        public void RaycastPenetrating(Vector3 from, Vector3 to, ICollection<HitResult> resultsOutput, CollisionFilterGroups filterGroup = DefaultGroup, CollisionFilterGroupFlags filterFlags = DefaultFlags, bool hitTriggers = false, EFlags eFlags = EFlags.None)
+        public void RaycastPenetrating(Vector3 from, Vector3 to, ICollection<HitResult> resultsOutput, CollisionFilterGroups filterGroup = DefaultGroup, CollisionFilterGroupFlags filterFlags = DefaultFlags, bool hitTriggers = false)
         {
-            RayParams parameters;
-            parameters.From = from;
-            parameters.To = to;
-            parameters.FilterGroup = filterGroup;
-            parameters.FilterMask = filterFlags;
-            parameters.HitsNoContactResponseObjects = hitTriggers;
-            parameters.EFlags = eFlags;
-
-            var callback = StrideAllHitsRayResultCallback.Shared(resultsOutput, parameters);
+            var callback = StrideAllHitsRayResultCallback.Shared(ref from, ref to, hitTriggers, resultsOutput, filterGroup, filterFlags);
             collisionWorld.RayTest(from, to, callback);
         }
 
@@ -1030,16 +999,7 @@ namespace Stride.Physics
         /// If the engine is running slow (large deltaTime), then you must increase the number of maxSubSteps to compensate for this, otherwise your simulation is “losing” time.
         /// It's important that frame DeltaTime is always less than MaxSubSteps*FixedTimeStep, otherwise you are losing time.
         /// </summary>
-        [Obsolete($"Value is ignored, use {nameof(MaxTickDuration)} instead")]
         public int MaxSubSteps { get; set; }
-
-        /// <userdoc>
-        /// Amount of time in seconds allotted to update the physics simulation when the update rate is lower than <see cref="FixedTimeStep"/>.
-        /// When the whole game takes longer than <see cref="FixedTimeStep"/> to display one frame, the simulation has to tick multiple times to catch up.
-        /// Those additional ticks may themselves make the current frame take longer, leading to a negative feedback loop for your game's performances.
-        /// This variable will 'slow down' the simulation instead.
-        /// </userdoc>
-        public float MaxTickDuration { get; set; }
 
         /// <summary>
         /// By decreasing the size of fixedTimeStep, you are increasing the “resolution” of the simulation.
@@ -1085,27 +1045,8 @@ namespace Stride.Physics
 
             SimulationProfiler = Profiler.Begin(PhysicsProfilingKeys.SimulationProfilingKey);
 
-            if (discreteDynamicsWorld != null)
-            {
-                var timestamp = Stopwatch.GetTimestamp();
-                // Runs as many ticks of the simulation as possible to catch up with game time as long as sim doesn't take too long
-                for (carriedDelta += deltaTime; carriedDelta >= FixedTimeStep; )
-                {
-                    discreteDynamicsWorld.StepSimulation(FixedTimeStep, 0, FixedTimeStep);
-                    carriedDelta -= FixedTimeStep;
-
-                    if (carriedDelta >= FixedTimeStep && (Stopwatch.GetTimestamp() - timestamp) * OneOverFrequency > MaxTickDuration)
-                    {
-                        // Pretend we caught up by removing the time the ticks would have taken away if we were to run all of them
-                        carriedDelta %= FixedTimeStep;
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                collisionWorld.PerformDiscreteCollisionDetection();
-            }
+            if (discreteDynamicsWorld != null) discreteDynamicsWorld.StepSimulation(deltaTime, MaxSubSteps, FixedTimeStep);
+            else collisionWorld.PerformDiscreteCollisionDetection();
 
             SimulationProfiler.End("Alive rigidbodies: {0}", UpdatedRigidbodies);
 
@@ -1133,7 +1074,7 @@ namespace Stride.Physics
 
         /// <summary>
         /// Called right before processing a tick of the physics simulation,
-        /// this may never occur before many updates, or occur multiple times between updates depending on this <see cref="Simulation"/> properties
+        /// this may occur from zero up to <see cref="MaxSubSteps"/> time per update.
         /// </summary>
         public event SimulationTickEvent PreTick
         {
@@ -1151,7 +1092,7 @@ namespace Stride.Physics
 
         /// <summary>
         /// Called right after processing a tick of the physics simulation,
-        /// this may never occur before many updates, or occur multiple times between updates depending on this <see cref="Simulation"/> properties
+        /// this may occur from zero up to <see cref="MaxSubSteps"/> time per update.
         /// </summary>
         public event SimulationTickEvent PostTick
         {
@@ -1253,11 +1194,11 @@ namespace Stride.Physics
                 return rayResult.m_hitFraction;
             }
 
-            public static StrideAllHitsRayResultCallback Shared(ICollection<HitResult> buffer, in RayParams parameters)
+            public static StrideAllHitsRayResultCallback Shared(ref Vector3 from, ref Vector3 to, bool hitTriggers, ICollection<HitResult> buffer, CollisionFilterGroups filterGroup = DefaultGroup, CollisionFilterGroupFlags filterMask = DefaultFlags)
             {
                 shared ??= new StrideAllHitsRayResultCallback();
                 shared.resultsList = buffer;
-                shared.Recycle(parameters);
+                shared.Recycle(ref from, ref to, hitTriggers, filterGroup, filterMask);
                 return shared;
             }
         }
@@ -1287,16 +1228,16 @@ namespace Stride.Physics
                 return fraction;
             }
 
-            protected override void Recycle(in RayParams parameters)
+            protected override void Recycle(ref Vector3 from, ref Vector3 to, bool hitNoContResp, CollisionFilterGroups filterGroup = DefaultGroup, CollisionFilterGroupFlags filterMask = DefaultFlags)
             {
-                base.Recycle(parameters);
+                base.Recycle(ref from, ref to, hitNoContResp, filterGroup, filterMask);
                 closestHit = default;
             }
 
-            public static StrideClosestRayResultCallback Shared(in RayParams parameters)
+            public static StrideClosestRayResultCallback Shared(ref Vector3 from, ref Vector3 to, bool hitTriggers, CollisionFilterGroups filterGroup = DefaultGroup, CollisionFilterGroupFlags filterMask = DefaultFlags)
             {
                 shared ??= new StrideClosestRayResultCallback();
-                shared.Recycle(parameters);
+                shared.Recycle(ref from, ref to, hitTriggers, filterGroup, filterMask);
                 return shared;
             }
         }
@@ -1337,15 +1278,15 @@ namespace Stride.Physics
                 };
             }
 
-            protected virtual void Recycle(in RayParams parameters)
+            protected virtual void Recycle(ref Vector3 from, ref Vector3 to, bool hitNoContResp, CollisionFilterGroups filterGroup = DefaultGroup, CollisionFilterGroupFlags filterMask = DefaultFlags)
             {
-                rayFromWorld = parameters.From;
-                rayToWorld = parameters.To;
+                rayFromWorld = from;
+                rayToWorld = to;
                 ClosestHitFraction = float.PositiveInfinity;
-                Flags = (uint)parameters.EFlags;
-                CollisionFilterGroup = (int)parameters.FilterGroup;
-                CollisionFilterMask = (int)parameters.FilterMask;
-                hitNoContactResponseObjects = parameters.HitsNoContactResponseObjects;
+                Flags = 0;
+                CollisionFilterGroup = (int)filterGroup;
+                CollisionFilterMask = (int)filterMask;
+                hitNoContactResponseObjects = hitNoContResp;
             }
 
             public override bool NeedsCollision(BulletSharp.BroadphaseProxy proxy0)
@@ -1414,16 +1355,6 @@ namespace Stride.Physics
 
                 return base.NeedsCollision(proxy0);
             }
-        }
-
-        ref struct RayParams
-        {
-            public Vector3 From;
-            public Vector3 To;
-            public bool HitsNoContactResponseObjects;
-            public CollisionFilterGroups FilterGroup;
-            public CollisionFilterGroupFlags FilterMask;
-            public EFlags EFlags;
         }
     }
 }

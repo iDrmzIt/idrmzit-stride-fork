@@ -713,9 +713,9 @@ namespace FreeImageAPI.Metadata
 		{
 			if (string.IsNullOrEmpty(s))
 				return null;
-			if (s.StartsWith("R98", StringComparison.Ordinal))
+			if (s.StartsWith("R98"))
 				return InteroperabilityMode.R98;
-			if (s.StartsWith("THM", StringComparison.Ordinal))
+			if (s.StartsWith("THM"))
 				return InteroperabilityMode.THM;
 			return InteroperabilityMode.Undefined;
 		}
