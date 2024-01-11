@@ -4,8 +4,6 @@ using Stride.Core.Assets.Tests.Helpers;
 
 namespace Stride.Core.Assets.Quantum.Tests
 {
-    using SerializationHelper = Helpers.SerializationHelper;
-
     public class TestAssetCompositeHierarchySerialization
     {
         const string SimpleHierarchyYaml = @"!MyAssetHierarchy

@@ -13,8 +13,6 @@ using Stride.Core.Quantum;
 
 namespace Stride.Core.Assets.Quantum.Tests
 {
-    using SerializationHelper = Helpers.SerializationHelper;
-
     public class TestOverrideSerialization
     {
         /* test TODO:
